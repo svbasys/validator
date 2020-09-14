@@ -16,13 +16,13 @@
 
 package de.kosit.validationtool.daemon;
 
-import static org.apache.commons.lang3.StringUtils.isNumeric;
-
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.atomic.AtomicLong;
+
+import org.apache.commons.lang3.StringUtils;
 
 import com.sun.net.httpserver.HttpExchange;
 
@@ -59,14 +59,14 @@ class CheckHandler extends BaseHandler {
      *            werden soll.
      */
     @Override
-    public void handle(final HttpExchange httpExchange) throws IOException {
+    public void handle(final com.sun.net.httpserver.HttpExchange httpExchange) throws IOException {
         try {
             log.debug("Incoming request");
             final String requestMethod = httpExchange.getRequestMethod();
             // check neccessary, since gui can be disabled
             if (requestMethod.equals("POST")) {
                 final BufferedInputStream buffered = new BufferedInputStream(httpExchange.getRequestBody());
-                if (isContentAvailable(httpExchange, buffered)) {
+                if (!isMultipartFormData(httpExchange) && isContentAvailable(httpExchange, buffered)) {
                     final SourceInput serverInput = (SourceInput) InputFactory.read(buffered,
                             resolveInputName(httpExchange.getRequestURI()));
                     final Result result = this.implemenation.checkInput(serverInput);
@@ -84,9 +84,16 @@ class CheckHandler extends BaseHandler {
         }
     }
 
-    private static boolean isContentAvailable(final HttpExchange httpExchange, final BufferedInputStream buffered) {
+    private static boolean isContentAvailable(final com.sun.net.httpserver.HttpExchange httpExchange, final BufferedInputStream buffered) {
         final String length = httpExchange.getRequestHeaders().getFirst("Content-length");
-        return isNumeric(length) && Integer.parseInt(length) > 0 || streamContainsContent(buffered);
+        if (StringUtils.isNumeric(length)) {
+            return Integer.parseInt(length) > 0;
+        }
+        return streamContainsContent(buffered);
+    }
+
+    private static boolean isMultipartFormData(final HttpExchange httpExchange) {
+        return httpExchange.getRequestHeaders().getFirst("Content-type").startsWith("multipart");
     }
 
     private static boolean streamContainsContent(final BufferedInputStream requestBody) {
