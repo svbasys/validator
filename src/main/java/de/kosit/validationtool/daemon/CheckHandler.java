@@ -16,9 +16,11 @@
 
 package de.kosit.validationtool.daemon;
 
+import static org.apache.commons.lang3.StringUtils.isNumeric;
+
+import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -63,9 +65,9 @@ class CheckHandler extends BaseHandler {
             final String requestMethod = httpExchange.getRequestMethod();
             // check neccessary, since gui can be disabled
             if (requestMethod.equals("POST")) {
-                final InputStream inputStream = httpExchange.getRequestBody();
-                if (inputStream.available() > 0) {
-                    final SourceInput serverInput = (SourceInput) InputFactory.read(inputStream,
+                final BufferedInputStream buffered = new BufferedInputStream(httpExchange.getRequestBody());
+                if (isContentAvailable(httpExchange, buffered)) {
+                    final SourceInput serverInput = (SourceInput) InputFactory.read(buffered,
                             resolveInputName(httpExchange.getRequestURI()));
                     final Result result = this.implemenation.checkInput(serverInput);
                     write(httpExchange, serialize(result), APPLICATION_XML, resolveStatus(result));
@@ -80,6 +82,24 @@ class CheckHandler extends BaseHandler {
             log.error("Error checking entity", e);
             error(httpExchange, HttpStatus.SC_INTERNAL_SERVER_ERROR, "Internal error: " + e.getMessage());
         }
+    }
+
+    private static boolean isContentAvailable(final HttpExchange httpExchange, final BufferedInputStream buffered) {
+        final String length = httpExchange.getRequestHeaders().getFirst("Content-length");
+        return isNumeric(length) && Integer.parseInt(length) > 0 || streamContainsContent(buffered);
+    }
+
+    private static boolean streamContainsContent(final BufferedInputStream requestBody) {
+        try {
+            requestBody.mark(2);
+            requestBody.read();
+            requestBody.read();
+            requestBody.reset();
+        } catch (final IOException e) {
+            return false;
+        }
+        return true;
+
     }
 
     private static String resolveInputName(final URI requestURI) {
