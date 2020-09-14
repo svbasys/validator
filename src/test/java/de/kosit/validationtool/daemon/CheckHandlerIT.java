@@ -72,8 +72,7 @@ public class CheckHandlerIT extends BaseIT {
     public void xmlResultTest() throws IOException {
         try ( final InputStream io = Simple.SIMPLE_VALID.toURL().openStream() ) {
             given().body(toContent(io)).contentType(APPLICATION_XML + "; charset=UTF-8").when().post("/").then()
-                    .contentType(APPLICATION_XML).and()
-                    .statusCode(SC_OK);
+                    .contentType(APPLICATION_XML).and().statusCode(SC_OK);
         }
     }
 
