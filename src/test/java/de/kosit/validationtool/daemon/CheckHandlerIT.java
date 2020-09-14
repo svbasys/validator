@@ -22,6 +22,7 @@ import static org.apache.http.HttpStatus.SC_OK;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Paths;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
@@ -44,10 +45,9 @@ public class CheckHandlerIT extends BaseIT {
     private static final String APPLICATION_XML = "application/xml";
 
     @Test
-    public void simpleTest() throws IOException {
-        try ( final InputStream io = Simple.SIMPLE_VALID.toURL().openStream() ) {
-            given().contentType(ContentType.XML).body(toContent(io)).when().post("/").then().statusCode(SC_OK);
-        }
+    public void simpleTest() {
+        given().contentType(ContentType.XML).body(Paths.get(Simple.SIMPLE_VALID).toFile()).log().all().when().post("/").then()
+                .statusCode(SC_OK);
     }
 
     @Test
@@ -57,19 +57,22 @@ public class CheckHandlerIT extends BaseIT {
 
     @Test
     public void testUnknown() throws IOException {
-        try ( final InputStream io = Simple.UNKNOWN.toURL().openStream() ) {
-            given().contentType(APPLICATION_XML).body(toContent(io)).when().post("/").then().statusCode(SC_NOT_ACCEPTABLE);
-        }
+        given().contentType(APPLICATION_XML).body(Paths.get(Simple.UNKNOWN).toFile()).when().post("/").then().statusCode(SC_NOT_ACCEPTABLE);
     }
 
     private static byte[] toContent(final InputStream io) throws IOException {
-        return IOUtils.toByteArray(io);
+        final byte[] bytes = IOUtils.toByteArray(io);
+        if (bytes.length == 0) {
+            System.out.println("nopen");
+        }
+        return bytes;
     }
 
     @Test
     public void xmlResultTest() throws IOException {
         try ( final InputStream io = Simple.SIMPLE_VALID.toURL().openStream() ) {
-            given().body(toContent(io)).contentType(APPLICATION_XML).when().post("/").then().contentType(APPLICATION_XML).and()
+            given().body(toContent(io)).contentType(APPLICATION_XML + "; charset=UTF-8").when().post("/").then()
+                    .contentType(APPLICATION_XML).and()
                     .statusCode(SC_OK);
         }
     }
