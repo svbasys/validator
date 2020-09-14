@@ -76,7 +76,6 @@ public class SchemaValidationAction implements CheckAction {
 
         private final Processor processor;
 
-        @java.lang.Override
         @Override
         public void serialize(final XdmNode node) throws SaxonApiException, IOException {
             try ( final ByteArrayOutputStream out = new ByteArrayOutputStream() ) {
@@ -88,13 +87,11 @@ public class SchemaValidationAction implements CheckAction {
             }
         }
 
-        @java.lang.Override
         @Override
         public void close() {
             // nothing do do
         }
 
-        @java.lang.Override
         @Override
         public InputStream openStream() {
             return new ByteArrayInputStream(this.bytes);
@@ -112,7 +109,6 @@ public class SchemaValidationAction implements CheckAction {
             this.processor = processor;
         }
 
-        @java.lang.Override
         @Override
         public void serialize(final XdmNode node) throws SaxonApiException, IOException {
             try ( final OutputStream out = Files.newOutputStream(this.file) ) {
@@ -123,13 +119,11 @@ public class SchemaValidationAction implements CheckAction {
             }
         }
 
-        @java.lang.Override
         @Override
         public void close() throws IOException {
             Files.deleteIfExists(this.file);
         }
 
-        @java.lang.Override
         @Override
         public InputStream openStream() throws IOException {
             return Files.newInputStream(this.file);
@@ -231,7 +225,6 @@ public class SchemaValidationAction implements CheckAction {
 
         InputStream openStream() throws IOException;
 
-        @java.lang.Override
         @Override
         default Source getSource() throws IOException {
             return new StreamSource(openStream());

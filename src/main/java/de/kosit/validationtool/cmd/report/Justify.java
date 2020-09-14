@@ -27,7 +27,6 @@ public enum Justify {
 
     LEFT {
 
-        @java.lang.Override
         @Override
         public String apply(final String string, final int length) {
             return StringUtils.rightPad(string, length);
@@ -35,7 +34,6 @@ public enum Justify {
     },
     CENTER {
 
-        @java.lang.Override
         @Override
         public String apply(final String string, final int length) {
             return StringUtils.center(string, length);
@@ -43,7 +41,6 @@ public enum Justify {
     },
     RIGHT {
 
-        @java.lang.Override
         @Override
         public String apply(final String string, final int length) {
             return StringUtils.leftPad(string, length);
