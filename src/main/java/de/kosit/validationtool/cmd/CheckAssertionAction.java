@@ -1,20 +1,17 @@
 /*
- * Licensed to the Koordinierungsstelle für IT-Standards (KoSIT) under
- * one or more contributor license agreements. See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  KoSIT licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at
+ * Copyright 2017-present  Koordinierungsstelle für IT-Standards (KoSIT)
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package de.kosit.validationtool.cmd;
@@ -59,12 +56,12 @@ class CheckAssertionAction implements CheckAction {
 
     private Map<String, List<AssertionType>> mappedAssertions;
 
-    private static boolean matches(String key, String name) {
+    private static boolean matches(final String key, final String name) {
         return key.startsWith(name) || (name + ".xml").endsWith(key);
     }
 
     @Override
-    public void check(Bag results) {
+    public void check(final Bag results) {
         log.info("Checking assertions for {}", results.getInput().getName());
         final List<AssertionType> toCheck = findAssertions(results.getName());
         final List<String> errors = new ArrayList<>();
@@ -87,41 +84,42 @@ class CheckAssertionAction implements CheckAction {
         }
     }
 
-    private List<AssertionType> findAssertions(String name) {
+    private List<AssertionType> findAssertions(final String name) {
         return getMapped().entrySet().stream().filter(e -> matches(e.getKey(), name)).map(Map.Entry::getValue).findFirst().orElse(null);
     }
 
-    private boolean check(XdmNode document, AssertionType assertion) {
+    private boolean check(final XdmNode document, final AssertionType assertion) {
         try {
             final XPathSelector selector = createSelector(assertion);
             selector.setContextItem(document);
             return selector.effectiveBooleanValue();
-        } catch (SaxonApiException e) {
+        } catch (final SaxonApiException e) {
             log.error("Error evaluating assertion {} for {}", assertion.getTest(), assertion.getReportDoc(), e);
         }
         return false;
 
     }
 
-    private XPathSelector createSelector(AssertionType assertion) throws SaxonApiException {
+    private XPathSelector createSelector(final AssertionType assertion) throws SaxonApiException {
         try {
             final XPathCompiler compiler = getProcessor().newXPathCompiler();
-            assertions.getNamespace().forEach(ns -> compiler.declareNamespace(ns.getPrefix(), ns.getValue()));
+            this.assertions.getNamespace().forEach(ns -> compiler.declareNamespace(ns.getPrefix(), ns.getValue()));
             return compiler.compile(assertion.getTest()).load();
-        } catch (SaxonApiException e) {
+        } catch (final SaxonApiException e) {
             throw new IllegalStateException(String.format("Can not compile xpath match expression '%s'",
                     StringUtils.isNotBlank(assertion.getTest()) ? assertion.getTest() : "EMPTY EXPRESSION"), e);
         }
     }
 
     private Map<String, List<AssertionType>> getMapped() {
-        if (mappedAssertions == null) {
-            mappedAssertions = new HashMap<>();
-            for (AssertionType assertionType : assertions.getAssertion()) {
-                List<AssertionType> list = mappedAssertions.computeIfAbsent(assertionType.getReportDoc(), k -> new ArrayList<>());
+        if (this.mappedAssertions == null) {
+            this.mappedAssertions = new HashMap<>();
+            for (final AssertionType assertionType : this.assertions.getAssertion()) {
+                final List<AssertionType> list = this.mappedAssertions.computeIfAbsent(assertionType.getReportDoc(),
+                        k -> new ArrayList<>());
                 list.add(assertionType);
             }
         }
-        return mappedAssertions;
+        return this.mappedAssertions;
     }
 }

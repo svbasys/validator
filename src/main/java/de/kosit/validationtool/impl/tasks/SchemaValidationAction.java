@@ -1,20 +1,17 @@
 /*
- * Licensed to the Koordinierungsstelle für IT-Standards (KoSIT) under
- * one or more contributor license agreements. See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  KoSIT licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at
+ * Copyright 2017-present  Koordinierungsstelle für IT-Standards (KoSIT)
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package de.kosit.validationtool.impl.tasks;
@@ -79,6 +76,7 @@ public class SchemaValidationAction implements CheckAction {
 
         private final Processor processor;
 
+        @java.lang.Override
         @Override
         public void serialize(final XdmNode node) throws SaxonApiException, IOException {
             try ( final ByteArrayOutputStream out = new ByteArrayOutputStream() ) {
@@ -90,11 +88,13 @@ public class SchemaValidationAction implements CheckAction {
             }
         }
 
+        @java.lang.Override
         @Override
         public void close() {
             // nothing do do
         }
 
+        @java.lang.Override
         @Override
         public InputStream openStream() {
             return new ByteArrayInputStream(this.bytes);
@@ -112,6 +112,7 @@ public class SchemaValidationAction implements CheckAction {
             this.processor = processor;
         }
 
+        @java.lang.Override
         @Override
         public void serialize(final XdmNode node) throws SaxonApiException, IOException {
             try ( final OutputStream out = Files.newOutputStream(this.file) ) {
@@ -122,11 +123,13 @@ public class SchemaValidationAction implements CheckAction {
             }
         }
 
+        @java.lang.Override
         @Override
         public void close() throws IOException {
             Files.deleteIfExists(this.file);
         }
 
+        @java.lang.Override
         @Override
         public InputStream openStream() throws IOException {
             return Files.newInputStream(this.file);
@@ -228,6 +231,7 @@ public class SchemaValidationAction implements CheckAction {
 
         InputStream openStream() throws IOException;
 
+        @java.lang.Override
         @Override
         default Source getSource() throws IOException {
             return new StreamSource(openStream());
