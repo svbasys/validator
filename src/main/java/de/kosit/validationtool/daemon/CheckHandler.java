@@ -33,6 +33,7 @@ import de.kosit.validationtool.api.Check;
 import de.kosit.validationtool.api.InputFactory;
 import de.kosit.validationtool.api.Result;
 import de.kosit.validationtool.impl.input.SourceInput;
+import de.kosit.validationtool.impl.input.StreamHelper;
 
 import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.SaxonApiException;
@@ -65,7 +66,7 @@ class CheckHandler extends BaseHandler {
             final String requestMethod = httpExchange.getRequestMethod();
             // check neccessary, since gui can be disabled
             if (requestMethod.equals("POST")) {
-                final BufferedInputStream buffered = new BufferedInputStream(httpExchange.getRequestBody());
+                final BufferedInputStream buffered = StreamHelper.wrapPeekable(httpExchange.getRequestBody());
                 if (!isMultipartFormData(httpExchange) && isContentAvailable(httpExchange, buffered)) {
                     final SourceInput serverInput = (SourceInput) InputFactory.read(buffered,
                             resolveInputName(httpExchange.getRequestURI()));
@@ -84,7 +85,8 @@ class CheckHandler extends BaseHandler {
         }
     }
 
-    private static boolean isContentAvailable(final com.sun.net.httpserver.HttpExchange httpExchange, final BufferedInputStream buffered) {
+    private static boolean isContentAvailable(final com.sun.net.httpserver.HttpExchange httpExchange, final BufferedInputStream buffered)
+            throws IOException {
         final String length = httpExchange.getRequestHeaders().getFirst("Content-length");
         if (StringUtils.isNumeric(length)) {
             return Integer.parseInt(length) > 0;
@@ -96,16 +98,8 @@ class CheckHandler extends BaseHandler {
         return httpExchange.getRequestHeaders().getFirst("Content-type").startsWith("multipart");
     }
 
-    private static boolean streamContainsContent(final BufferedInputStream requestBody) {
-        try {
-            requestBody.mark(2);
-            requestBody.read();
-            requestBody.read();
-            requestBody.reset();
-        } catch (final IOException e) {
-            return false;
-        }
-        return true;
+    private static boolean streamContainsContent(final BufferedInputStream requestBody) throws IOException {
+        return requestBody.available() > 0;
 
     }
 
