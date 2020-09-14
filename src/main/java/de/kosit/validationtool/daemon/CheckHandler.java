@@ -77,6 +77,7 @@ class CheckHandler extends BaseHandler {
                 error(httpExchange, HttpStatus.SC_METHOD_NOT_ALLOWED, "Method not supported");
             }
         } catch (final Exception e) {
+            log.error("Error checking entity", e);
             error(httpExchange, HttpStatus.SC_INTERNAL_SERVER_ERROR, "Internal error: " + e.getMessage());
         }
     }
