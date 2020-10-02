@@ -218,7 +218,7 @@ public class Validator {
 
     private static ConfigurationLoader getConfiguration(final CommandLine cmd) {
         final URI scenarioLocation = determineDefinition(cmd);
-        final URI repositoryLocation = determineRepository(cmd);
+        final URI repositoryLocation = determineRepository(scenarioLocation, cmd);
         reportConfiguration(scenarioLocation, repositoryLocation);
         return Configuration.load(scenarioLocation, repositoryLocation);
     }
@@ -319,7 +319,7 @@ public class Validator {
 
     }
 
-    private static URI determineRepository(final CommandLine cmd) {
+    private static URI determineRepository(final URI scenarioLocation, final CommandLine cmd) {
         if (checkOptionWithValue(REPOSITORY, cmd)) {
             final Path d = Paths.get(cmd.getOptionValue(REPOSITORY.getOpt()));
             if (Files.isDirectory(d)) {
@@ -329,7 +329,7 @@ public class Validator {
                         String.format("Not a valid path for repository definition specified: '%s'", d.toAbsolutePath()));
             }
         }
-        return null;
+        return scenarioLocation.resolve(URI.create("."));
     }
 
     private static URI determineDefinition(final CommandLine cmd) {
