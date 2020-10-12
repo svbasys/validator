@@ -41,6 +41,7 @@ import de.kosit.validationtool.impl.ContentRepository;
 import de.kosit.validationtool.impl.ConversionService;
 import de.kosit.validationtool.impl.ResolvingMode;
 import de.kosit.validationtool.impl.Scenario;
+import de.kosit.validationtool.impl.SchemaProvider;
 import de.kosit.validationtool.impl.model.Result;
 import de.kosit.validationtool.impl.tasks.DocumentParseAction;
 import de.kosit.validationtool.impl.xml.RelativeUriResolver;
@@ -135,7 +136,7 @@ public class ConfigurationLoader {
         final ResolvingConfigurationStrategy resolving = getResolvingConfigurationStrategy();
         final ContentRepository contentRepository = new ContentRepository(processor, resolving, getScenarioRepository());
 
-        final Scenarios def = loadScenarios(contentRepository.getScenarioSchema(), processor);
+        final Scenarios def = loadScenarios(SchemaProvider.getScenarioSchema(), processor);
         final List<Scenario> scenarios = initializeScenarios(def, contentRepository);
         final Scenario fallbackScenario = createFallback(def, contentRepository);
         final DefaultConfiguration configuration = new DefaultConfiguration(scenarios, fallbackScenario);

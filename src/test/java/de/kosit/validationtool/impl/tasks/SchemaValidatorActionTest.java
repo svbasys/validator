@@ -44,6 +44,7 @@ import de.kosit.validationtool.api.XmlError.Severity;
 import de.kosit.validationtool.impl.Helper;
 import de.kosit.validationtool.impl.Helper.Simple;
 import de.kosit.validationtool.impl.Scenario;
+import de.kosit.validationtool.impl.SchemaProvider;
 import de.kosit.validationtool.impl.TestObjectFactory;
 import de.kosit.validationtool.impl.input.SourceInput;
 import de.kosit.validationtool.impl.tasks.CheckAction.Bag;
@@ -89,7 +90,7 @@ public class SchemaValidatorActionTest {
 
     @Test
     public void testSchemaReferences() {
-        final Schema reportInputSchema = Simple.createContentRepository().getReportInputSchema();
+        final Schema reportInputSchema = SchemaProvider.getReportInputSchema();
         assertThat(reportInputSchema).isNotNull();
     }
 

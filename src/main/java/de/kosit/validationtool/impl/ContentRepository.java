@@ -34,7 +34,6 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
 import org.apache.commons.lang3.StringUtils;
-import org.w3c.dom.ls.LSResourceResolver;
 import org.xml.sax.SAXException;
 
 import lombok.Getter;
@@ -66,8 +65,6 @@ import net.sf.saxon.s9api.XsltExecutable;
 @RequiredArgsConstructor
 @Slf4j
 public class ContentRepository {
-
-    private Schema reportInputSchema;
 
     @Getter
     private final Processor processor;
@@ -108,18 +105,13 @@ public class ContentRepository {
         }
     }
 
-    private Schema createSchema(final Source[] schemaSources, final LSResourceResolver resourceResolver) {
+    private Schema createSchema(final Source[] schemaSources) {
         try {
-            final SchemaFactory sf = this.schemaFactory;
-            sf.setResourceResolver(resourceResolver);
-            return sf.newSchema(schemaSources);
+            this.schemaFactory.setResourceResolver(null);
+            return this.schemaFactory.newSchema(schemaSources);
         } catch (final SAXException e) {
             throw new IllegalArgumentException("Can not load schema from sources " + schemaSources[0].getSystemId(), e);
         }
-    }
-
-    private Schema createSchema(final Source[] schemaSources) {
-        return createSchema(schemaSources, null);
     }
 
     /**
@@ -158,38 +150,11 @@ public class ContentRepository {
      * @return das erzeugte Schema
      */
     public Schema createSchema(final URL url) {
-        return createSchema(url, null);
+        return createSchema(new Source[] { resolve(url) });
     }
 
     public Schema createSchema(final URI uri) {
         return createSchema(new Source[] { resolveInRepository(uri) });
-    }
-
-    public Schema createSchema(final URL url, final LSResourceResolver resourceResolver) {
-        log.info("Load schema from source {}", url.getPath());
-        return createSchema(new Source[] { resolve(url) }, resourceResolver);
-    }
-
-    /**
-     * Liefert das definiert Schema für die Szenario-Konfiguration
-     *
-     * @return Scenario-Schema
-     */
-    public Schema getScenarioSchema() {
-        return createSchema(ContentRepository.class.getResource("/xsd/scenarios.xsd"));
-    }
-
-    /**
-     * Liefert das definierte Schema für die Validierung des [@link CreateReportInput}
-     *
-     * @return ReportInput-Schema
-     */
-    public Schema getReportInputSchema() {
-        if (this.reportInputSchema == null) {
-            final Source source = resolve(ContentRepository.class.getResource("/xsd/createReportInput.xsd"));
-            this.reportInputSchema = createSchema(new Source[] { source }, new ClassPathResourceResolver("/xsd"));
-        }
-        return this.reportInputSchema;
     }
 
     /**
