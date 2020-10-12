@@ -249,8 +249,7 @@ public class DefaultCheckTest {
         assertThat(result.isProcessingSuccessful()).isEqualTo(true);
 
         // test compatible configuration
-        node = this.validCheck.getConfiguration().getContentRepository().getProcessor().newDocumentBuilder()
-                .build(new StreamSource(SIMPLE_VALID.toASCIIString()));
+        node = this.validCheck.getProcessor().newDocumentBuilder().build(new StreamSource(SIMPLE_VALID.toASCIIString()));
         domInput = InputFactory.read(node, "node test");
         result = this.validCheck.checkInput(domInput);
         assertThat(result.isProcessingSuccessful()).isEqualTo(true);
