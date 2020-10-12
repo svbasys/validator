@@ -30,6 +30,7 @@ import de.kosit.validationtool.api.Input;
 import de.kosit.validationtool.api.ResolvingConfigurationStrategy;
 import de.kosit.validationtool.impl.model.Result;
 import de.kosit.validationtool.impl.tasks.DocumentParseAction;
+import de.kosit.validationtool.impl.xml.ProcessorProvider;
 import de.kosit.validationtool.model.reportInput.XMLSyntaxError;
 
 import net.sf.saxon.s9api.Processor;
@@ -83,7 +84,7 @@ public class Helper {
 
         public static final ContentRepository createContentRepository() {
             final ResolvingConfigurationStrategy strategy = ResolvingMode.STRICT_RELATIVE.getStrategy();
-            return new ContentRepository(strategy, Simple.REPOSITORY_URI);
+            return new ContentRepository(Helper.getTestProcessor(), strategy, Simple.REPOSITORY_URI);
         }
 
         public static URI getSchemaLocation() {
@@ -171,6 +172,6 @@ public class Helper {
     }
 
     public static Processor createProcessor() {
-        return ResolvingMode.STRICT_RELATIVE.getStrategy().getProcessor();
+        return ProcessorProvider.getProcessor();
     }
 }

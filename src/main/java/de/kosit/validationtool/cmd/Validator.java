@@ -69,6 +69,7 @@ import de.kosit.validationtool.daemon.Daemon;
 import de.kosit.validationtool.impl.ConversionService;
 import de.kosit.validationtool.impl.EngineInformation;
 import de.kosit.validationtool.impl.Printer;
+import de.kosit.validationtool.impl.xml.ProcessorProvider;
 
 import net.sf.saxon.s9api.Processor;
 
@@ -152,7 +153,7 @@ public class Validator {
         if (cmd.hasOption(DISABLE_GUI.getOpt())) {
             validDaemon.setGuiEnabled(false);
         }
-        final Configuration configuration = config.build();
+        final Configuration configuration = config.build(ProcessorProvider.getProcessor());
         printScenarios(configuration);
         Printer.writeOut("\nStarting daemon mode ...");
         validDaemon.startServer(configuration);
@@ -170,7 +171,7 @@ public class Validator {
         long start = System.currentTimeMillis();
         final Option[] unavailable = new Option[] { HOST, PORT, WORKER_COUNT, DISABLE_GUI };
         warnUnusedOptions(cmd, unavailable, false);
-        final Configuration config = getConfiguration(cmd).build();
+        final Configuration config = getConfiguration(cmd).build(ProcessorProvider.getProcessor());
         printScenarios(config);
         final InternalCheck check = new InternalCheck(config);
         final Path outputDirectory = determineOutputDirectory(cmd);

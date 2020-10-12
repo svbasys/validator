@@ -38,6 +38,7 @@ import com.sun.net.httpserver.HttpExchange;
 import de.kosit.validationtool.api.Configuration;
 import de.kosit.validationtool.config.TestConfigurationFactory;
 import de.kosit.validationtool.impl.ConversionService;
+import de.kosit.validationtool.impl.Helper;
 
 /**
  * @author Andreas Penski
@@ -51,7 +52,7 @@ public class ConfigHandlerTest {
         final OutputStream stream = mock(OutputStream.class);
         when(exchange.getResponseHeaders()).thenReturn(headers);
         when(exchange.getResponseBody()).thenReturn(stream);
-        final Configuration config = TestConfigurationFactory.createSimpleConfiguration().build();
+        final Configuration config = TestConfigurationFactory.createSimpleConfiguration().build(Helper.getTestProcessor());
         final ConfigHandler handler = new ConfigHandler(config, new ConversionService());
         handler.handle(exchange);
         verify(exchange, times(1)).sendResponseHeaders(HttpStatus.SC_OK, 0);

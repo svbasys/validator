@@ -89,7 +89,8 @@ public class TestBagBuilder {
     }
 
     private static Schema createSchema(final URL toURL) {
-        final ContentRepository contentRepository = new ContentRepository(ResolvingMode.STRICT_RELATIVE.getStrategy(), null);
+        final ContentRepository contentRepository = new ContentRepository(Helper.getTestProcessor(),
+                ResolvingMode.STRICT_RELATIVE.getStrategy(), null);
         return contentRepository.createSchema(toURL);
     }
 

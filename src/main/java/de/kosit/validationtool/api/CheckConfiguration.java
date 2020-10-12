@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import de.kosit.validationtool.impl.ContentRepository;
 import de.kosit.validationtool.impl.Scenario;
+import de.kosit.validationtool.impl.xml.ProcessorProvider;
 
 /**
  * Zentrale Konfigration einer Prüf-Instanz.
@@ -55,7 +56,7 @@ public class CheckConfiguration implements Configuration {
 
     private Configuration getDelegate() {
         if (this.delegate == null) {
-            this.delegate = Configuration.load(this.scenarioDefinition, this.scenarioRepository).build();
+            this.delegate = Configuration.load(this.scenarioDefinition, this.scenarioRepository).build(ProcessorProvider.getProcessor());
         }
         return this.delegate;
     }

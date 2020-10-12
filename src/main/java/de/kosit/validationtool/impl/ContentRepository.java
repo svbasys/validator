@@ -90,10 +90,10 @@ public class ContentRepository {
      * @param strategy the security and resolving strategy
      * @param repository the repository.
      */
-    public ContentRepository(final ResolvingConfigurationStrategy strategy, final URI repository) {
+    public ContentRepository(final Processor processor, final ResolvingConfigurationStrategy strategy, final URI repository) {
         this.repository = repository;
         this.resolvingConfigurationStrategy = strategy;
-        this.processor = this.resolvingConfigurationStrategy.getProcessor();
+        this.processor = processor;
         this.resolver = this.resolvingConfigurationStrategy.createResolver(repository);
         this.unparsedTextURIResolver = this.resolvingConfigurationStrategy.createUnparsedTextURIResolver(repository);
         this.schemaFactory = this.resolvingConfigurationStrategy.createSchemaFactory();

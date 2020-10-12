@@ -131,10 +131,9 @@ public class ConfigurationLoader {
 
     }
 
-    public Configuration build() {
+    public Configuration build(final Processor processor) {
         final ResolvingConfigurationStrategy resolving = getResolvingConfigurationStrategy();
-        final Processor processor = resolving.getProcessor();
-        final ContentRepository contentRepository = new ContentRepository(resolving, getScenarioRepository());
+        final ContentRepository contentRepository = new ContentRepository(processor, resolving, getScenarioRepository());
 
         final Scenarios def = loadScenarios(contentRepository.getScenarioSchema(), processor);
         final List<Scenario> scenarios = initializeScenarios(def, contentRepository);

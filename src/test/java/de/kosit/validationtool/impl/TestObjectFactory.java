@@ -16,8 +16,6 @@
 
 package de.kosit.validationtool.impl;
 
-import de.kosit.validationtool.impl.xml.StrictLocalResolvingStrategy;
-
 import net.sf.saxon.s9api.Processor;
 
 /**
@@ -29,7 +27,7 @@ public class TestObjectFactory {
 
     public static Processor createProcessor() {
         if (processor == null) {
-            processor = new StrictLocalResolvingStrategy().getProcessor();
+            processor = Helper.getTestProcessor();
         }
         return processor;
     }
