@@ -185,6 +185,9 @@ public class ConfigurationLoader {
         s.setSchema(repository.createSchema(def));
         s.setSchematronValidations(repository.createSchematronTransformations(def));
         s.setReportTransformation(repository.createReportTransformation(def));
+        s.setFactory(repository.getResolvingConfigurationStrategy());
+        s.setUriResolver(repository.getResolver());
+        s.setUnparsedTextURIResolver(repository.getUnparsedTextURIResolver());
         if (def.getAcceptMatch() != null) {
             s.setAcceptExecutable(repository.createAccepptExecutable(def));
         }

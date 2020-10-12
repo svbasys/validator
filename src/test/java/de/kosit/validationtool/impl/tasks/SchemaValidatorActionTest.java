@@ -48,7 +48,6 @@ import de.kosit.validationtool.impl.SchemaProvider;
 import de.kosit.validationtool.impl.TestObjectFactory;
 import de.kosit.validationtool.impl.input.SourceInput;
 import de.kosit.validationtool.impl.tasks.CheckAction.Bag;
-import de.kosit.validationtool.impl.xml.StrictRelativeResolvingStrategy;
 
 /**
  * Tests die {@link SchemaValidationAction}.
@@ -63,7 +62,7 @@ public class SchemaValidatorActionTest {
 
     @Before
     public void setup() {
-        this.service = new SchemaValidationAction(new StrictRelativeResolvingStrategy(), TestObjectFactory.createProcessor());
+        this.service = new SchemaValidationAction(TestObjectFactory.createProcessor());
     }
 
     @Test
