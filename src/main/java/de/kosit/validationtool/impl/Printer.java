@@ -50,7 +50,6 @@ public class Printer {
         System.err.println(MessageFormat.format(message, params));
     }
 
-
     public static void writeErr(final Exception ex, final String message, final Object... params) {
         writeErr(message, params);
         if (ex != null) {

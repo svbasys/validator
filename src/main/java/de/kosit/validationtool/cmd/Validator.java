@@ -125,8 +125,6 @@ public class Validator {
 
     private static ReturnValue processActions(final CommandLineOptions cmd) throws IOException {
         long start = System.currentTimeMillis();
-        // final Option[] unavailable = new Option[] { HOST, PORT, WORKER_COUNT, DISABLE_GUI };
-        // warnUnusedOptions(cmd, unavailable, false);
         final Processor processor = ProcessorProvider.getProcessor();
         final List<Configuration> config = getConfiguration(cmd).stream().map(b -> {
             return b.build(processor);
