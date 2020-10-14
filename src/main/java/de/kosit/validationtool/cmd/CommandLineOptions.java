@@ -85,7 +85,7 @@ public class CommandLineOptions implements Callable<ReturnValue> {
                 description = "Extract and save any html content within result as a separate file")
         private boolean extractHtml;
 
-        @Option(names = { "--serialize-report-input" }, description = "Serializes the report input to the cwd")
+        @Option(names = { "--serialize-report-input" }, description = "Serializes the report input to the cwd", defaultValue = "false")
         private boolean serializeInput;
 
         @Option(names = { "-c", "--check-assertions" }, paramLabel = "assertions-file",
@@ -110,10 +110,10 @@ public class CommandLineOptions implements Callable<ReturnValue> {
     }
 
     @ArgGroup(exclusive = false, heading = "Daemon options\n")
-    private final DaemonOptions daemonOptions = new DaemonOptions();
+    private DaemonOptions daemonOptions;
 
     @ArgGroup(exclusive = false, heading = "CLI usage options\n")
-    private final CliOptions cliOptions = new CliOptions();
+    private CliOptions cliOptions;
 
     @Option(names = { "-d", "--debug" }, description = "Prints some more debug information")
     private boolean debugOutput;
@@ -147,5 +147,13 @@ public class CommandLineOptions implements Callable<ReturnValue> {
         } else {
             System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, cmd.getLogLevel().name());
         }
+    }
+
+    public boolean isDaemonModeEnabled() {
+        return getDaemonOptions() != null;
+    }
+
+    public boolean isCliModeEnabled() {
+        return getCliOptions() != null;
     }
 }

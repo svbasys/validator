@@ -16,6 +16,7 @@
 
 package de.kosit.validationtool.cmd;
 
+import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 import java.io.IOException;
@@ -40,6 +41,7 @@ import de.kosit.validationtool.api.Configuration;
 import de.kosit.validationtool.api.Input;
 import de.kosit.validationtool.api.InputFactory;
 import de.kosit.validationtool.api.Result;
+import de.kosit.validationtool.cmd.CommandLineOptions.CliOptions;
 import de.kosit.validationtool.cmd.assertions.Assertions;
 import de.kosit.validationtool.cmd.report.Line;
 import de.kosit.validationtool.config.ConfigurationLoader;
@@ -73,7 +75,7 @@ public class Validator {
         greeting();
         final ReturnValue returnValue;
         try {
-            if (cmd.getDaemonOptions().isDaemonMode()) {
+            if (cmd.isDaemonModeEnabled()) {
                 startDaemonMode(cmd);
                 returnValue = ReturnValue.DAEMON_MODE;
             } else {
@@ -104,9 +106,10 @@ public class Validator {
     }
 
     private static void startDaemonMode(final CommandLineOptions cmd) {
-        // final Option[] unavailable = new Option[] { PRINT, CHECK_ASSERTIONS, DEBUG, OUTPUT, EXTRACT_HTML,
-        // REPORT_POSTFIX, REPORT_PREFIX };
-        // warnUnusedOptions(cmd, unavailable, true);
+        if (cmd.isCliModeEnabled()) {
+            Printer.writeErr("Mixed mode configuration detected. Use either daemon mode or cli mode commandline options. They are mutual "
+                    + "exclusive. Will ignore cli mode options");
+        }
         final List<Configuration> configuration = getConfiguration(cmd).stream().map(config -> {
 
             final Configuration c = config.build(ProcessorProvider.getProcessor());
@@ -120,14 +123,6 @@ public class Validator {
         validDaemon.startServer(ProcessorProvider.getProcessor(), configuration.toArray(new Configuration[configuration.size()]));
     }
 
-    private static void warnUnusedOptions(final CommandLineOptions cmd, final String[] unavailable, final boolean daemon) {
-        // Arrays.stream(cmd.getOptions()).filter(o -> ArrayUtils.contains(unavailable, o))
-        // .map(o -> "The option " + o.getLongOpt() + " is not available in daemon mode").forEach(log::error);
-        // if (daemon && !cmd.getArgList().isEmpty()) {
-        // log.info("Ignoring test targets in daemon mode");
-        // }
-    }
-
     private static ReturnValue processActions(final CommandLineOptions cmd) throws IOException {
         long start = System.currentTimeMillis();
         // final Option[] unavailable = new Option[] { HOST, PORT, WORKER_COUNT, DISABLE_GUI };
@@ -138,12 +133,12 @@ public class Validator {
         }).collect(Collectors.toList());
         printScenarios(config);
         final InternalCheck check = new InternalCheck(processor, config.toArray(new Configuration[config.size()]));
-        final Path outputDirectory = determineOutputDirectory(cmd.getCliOptions());
-        final CommandLineOptions.CliOptions cliOptions = cmd.getCliOptions();
+        final CommandLineOptions.CliOptions cliOptions = defaultIfNull(cmd.getCliOptions(), new CliOptions());
+        final Path outputDirectory = determineOutputDirectory(cliOptions);
         if (cliOptions.isExtractHtml()) {
             check.getCheckSteps().add(new ExtractHtmlContentAction(processor, outputDirectory));
         }
-        check.getCheckSteps().add(new SerializeReportAction(outputDirectory, processor, determineNamingStrategy(cmd.getCliOptions())));
+        check.getCheckSteps().add(new SerializeReportAction(outputDirectory, processor, determineNamingStrategy(cliOptions)));
         if (cliOptions.isSerializeInput()) {
             check.getCheckSteps().add(new SerializeReportInputAction(outputDirectory, check.getConversionService()));
         }
@@ -160,7 +155,7 @@ public class Validator {
         }
         log.info("Setup completed in {}ms\n", System.currentTimeMillis() - start);
 
-        final Collection<Input> targets = determineTestTargets(cmd.getCliOptions());
+        final Collection<Input> targets = determineTestTargets(cliOptions);
         start = System.currentTimeMillis();
         final Map<String, Result> results = new HashMap<>();
         Printer.writeOut("\nProcessing of {0} objects started", targets.size());

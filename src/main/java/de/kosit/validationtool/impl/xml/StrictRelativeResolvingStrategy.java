@@ -34,14 +34,10 @@ import net.sf.saxon.lib.UnparsedTextURIResolver;
 @RequiredArgsConstructor
 public class StrictRelativeResolvingStrategy extends BaseResolvingStrategy {
 
-    /**
-     * e.g. don't allow any scheme
-     */
-    private static final String EMPTY_SCHEME = "";
-
     @Override
     public SchemaFactory createSchemaFactory() {
         forceOpenJdkXmlImplementation();
+        @SuppressWarnings("java:S2755") //
         final SchemaFactory sf = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
         disableExternalEntities(sf);
         allowExternalSchema(sf, "file");

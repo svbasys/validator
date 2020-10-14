@@ -76,8 +76,6 @@ public class CommandLineApplication {
         final CommandLine commandLine = new CommandLine(new CommandLineOptions());
         try {
             commandLine.setExecutionExceptionHandler(CommandLineApplication::logExecutionException);
-            final ParseResult result = commandLine.parseArgs(args);
-            System.out.println(result);
             commandLine.execute(args);
             if (commandLine.isUsageHelpRequested()) {
                 resultStatus = ReturnValue.HELP_REQUEST;
@@ -87,15 +85,13 @@ public class CommandLineApplication {
 
         } catch (final Exception e) {
             writeErr("Error processing command line arguments: {0}", e.getMessage(), e);
-            commandLine.usage(System.out);
             resultStatus = ReturnValue.PARSING_ERROR;
         }
         return resultStatus;
     }
 
     private static int logExecutionException(final Exception ex, final CommandLine cli, final ParseResult parseResult) {
-        System.out.println("execution exception");
-        System.err.println(ex.getMessage());
+        ex.printStackTrace();
         // log.error(ex.getMessage(), ex);
 
         return 1;
