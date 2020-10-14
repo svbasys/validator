@@ -86,10 +86,10 @@ public class CommandlineApplicationTest {
 
     @Test
     public void testRequiredScenarioFile() {
-        final String[] args = new String[] { "-d", "arguments", "egal welche", "argument drin sind" };
+        final String[] args = new String[] { "arguments", "egal welche", "argument drin sind" };
         CommandLineApplication.mainProgram(args);
         assertThat(CommandLine.getErrorOutput()).isNotEmpty();
-        assertThat(CommandLine.getErrorOutput()).contains("Missing required option: s");
+        assertThat(CommandLine.getErrorOutput()).contains("Missing required option: '--scenarios");
     }
 
     @Test
@@ -102,10 +102,11 @@ public class CommandlineApplicationTest {
 
     @Test
     public void testIncorrectRepository() {
-        final String[] args = new String[] { "-s", Paths.get(Simple.SCENARIOS).toString(), Paths.get(Simple.NOT_EXISTING).toString() };
+        final String[] args = new String[] { "-s", Paths.get(Simple.SCENARIOS).toString(), "-r",
+                Paths.get(Simple.NOT_EXISTING).toString() };
         CommandLineApplication.mainProgram(args);
         assertThat(CommandLine.getErrorOutput()).isNotEmpty();
-        assertThat(CommandLine.getErrorOutput()).contains("Can not resolve");
+        assertThat(CommandLine.getErrorOutput()).contains("Not a valid path for repository");
     }
 
     @Test

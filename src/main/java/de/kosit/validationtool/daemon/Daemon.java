@@ -36,6 +36,8 @@ import de.kosit.validationtool.impl.ConversionService;
 import de.kosit.validationtool.impl.DefaultCheck;
 import de.kosit.validationtool.model.daemon.HealthType;
 
+import net.sf.saxon.s9api.Processor;
+
 /**
  * HTTP-Daemon für die Bereitstellung der Prüf-Funktionalität via http.
  *
@@ -76,7 +78,7 @@ public class Daemon {
      * 
      * @param config the configuration to use
      */
-    public void startServer(final Configuration config) {
+    public void startServer(final Processor processor, final Configuration... config) {
         HttpServer server = null;
         try {
             final ConversionService healthConverter = new ConversionService();
@@ -84,9 +86,9 @@ public class Daemon {
             final ConversionService converter = new ConversionService();
 
             server = HttpServer.create(getSocket(), 0);
-            server.createContext("/", createRootHandler(config));
-            server.createContext("/server/health", new HealthHandler(config, healthConverter));
-            server.createContext("/server/config", new ConfigHandler(config, converter));
+            server.createContext("/", createRootHandler(processor, config));
+            server.createContext("/server/health", new HealthHandler(config[0], healthConverter));
+            server.createContext("/server/config", new ConfigHandler(config[0], converter));
             server.setExecutor(createExecutor());
             server.start();
             log.info("Server {} started", server.getAddress());
@@ -96,10 +98,10 @@ public class Daemon {
         }
     }
 
-    private HttpHandler createRootHandler(final Configuration config) {
+    private HttpHandler createRootHandler(final Processor processor, final Configuration... config) {
         final HttpHandler rootHandler;
-        final DefaultCheck check = new DefaultCheck(config);
-        final CheckHandler checkHandler = new CheckHandler(check, config.getContentRepository().getProcessor());
+        final DefaultCheck check = new DefaultCheck(processor, config);
+        final CheckHandler checkHandler = new CheckHandler(check, processor);
         if (this.guiEnabled) {
             final GuiHandler gui = new GuiHandler();
             rootHandler = new RoutingHandler(checkHandler, gui);

@@ -16,25 +16,7 @@
 
 package de.kosit.validationtool.cmd;
 
-import static de.kosit.validationtool.cmd.CommandLineOptions.CHECK_ASSERTIONS;
-import static de.kosit.validationtool.cmd.CommandLineOptions.DEBUG;
-import static de.kosit.validationtool.cmd.CommandLineOptions.DISABLE_GUI;
-import static de.kosit.validationtool.cmd.CommandLineOptions.EXTRACT_HTML;
-import static de.kosit.validationtool.cmd.CommandLineOptions.HELP;
-import static de.kosit.validationtool.cmd.CommandLineOptions.HOST;
-import static de.kosit.validationtool.cmd.CommandLineOptions.OUTPUT;
-import static de.kosit.validationtool.cmd.CommandLineOptions.PORT;
-import static de.kosit.validationtool.cmd.CommandLineOptions.PRINT;
-import static de.kosit.validationtool.cmd.CommandLineOptions.PRINT_MEM_STATS;
-import static de.kosit.validationtool.cmd.CommandLineOptions.REPORT_POSTFIX;
-import static de.kosit.validationtool.cmd.CommandLineOptions.REPORT_PREFIX;
-import static de.kosit.validationtool.cmd.CommandLineOptions.REPOSITORY;
-import static de.kosit.validationtool.cmd.CommandLineOptions.SCENARIOS;
-import static de.kosit.validationtool.cmd.CommandLineOptions.SERIALIZE_REPORT_INPUT;
-import static de.kosit.validationtool.cmd.CommandLineOptions.SERVER;
-import static de.kosit.validationtool.cmd.CommandLineOptions.WORKER_COUNT;
-import static de.kosit.validationtool.cmd.CommandLineOptions.createOptions;
-import static de.kosit.validationtool.cmd.CommandLineOptions.printHelp;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 import java.io.IOException;
 import java.net.URI;
@@ -42,18 +24,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Option;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.fusesource.jansi.AnsiRenderer.Code;
 
 import lombok.extern.slf4j.Slf4j;
@@ -74,7 +52,7 @@ import de.kosit.validationtool.impl.xml.ProcessorProvider;
 import net.sf.saxon.s9api.Processor;
 
 /**
- * Actual evaluation and processing of commandline argumtens.
+ * Actual evaluation and processing of CommandLineOptions argumtens.
  * 
  * @author Andreas Penski
  */
@@ -91,23 +69,19 @@ public class Validator {
      *
      * @param cmd parsed commandline.
      */
-    static ReturnValue mainProgram(final CommandLine cmd) {
+    static ReturnValue mainProgram(final CommandLineOptions cmd) {
         greeting();
-        final org.apache.commons.cli.Options options = createOptions();
         final ReturnValue returnValue;
         try {
-            if (cmd.hasOption(SERVER.getOpt())) {
+            if (cmd.getDaemonOptions().isDaemonMode()) {
                 startDaemonMode(cmd);
                 returnValue = ReturnValue.DAEMON_MODE;
-            } else if (cmd.hasOption(HELP.getOpt()) || (cmd.getArgList().isEmpty() && !isPiped())) {
-                printHelp(options);
-                returnValue = ReturnValue.PARSING_ERROR;
             } else {
                 returnValue = processActions(cmd);
             }
         } catch (final Exception e) {
             Printer.writeErr(e.getMessage());
-            if (cmd.hasOption(DEBUG.getOpt())) {
+            if (cmd.isDebugOutput()) {
                 log.error(e.getMessage(), e);
             } else {
                 log.error(e.getMessage());
@@ -121,83 +95,72 @@ public class Validator {
         Printer.writeOut("{0} version {1}", EngineInformation.getName(), EngineInformation.getVersion());
     }
 
-    private static int determinePort(final CommandLine cmd) {
-        int port = 8080;
-        if (checkOptionWithValue(PORT, cmd)) {
-            port = Integer.parseInt(cmd.getOptionValue(PORT.getOpt()));
-        }
-        return port;
-    }
-
-    private static int determineThreads(final CommandLine cmd) {
+    private static int determineThreads(final CommandLineOptions.DaemonOptions cmd) {
         int threads = Runtime.getRuntime().availableProcessors();
-        if (checkOptionWithValue(WORKER_COUNT, cmd)) {
-            threads = Integer.parseInt(cmd.getOptionValue(WORKER_COUNT.getOpt()));
+        if (cmd.getWorkerCount() > 0) {
+            threads = cmd.getWorkerCount();
         }
         return threads;
     }
 
-    private static String determineHost(final CommandLine cmd) {
-        String host = "localhost";
-        if (checkOptionWithValue(HOST, cmd)) {
-            host = cmd.getOptionValue(HOST.getOpt());
-        }
-        return host;
-    }
+    private static void startDaemonMode(final CommandLineOptions cmd) {
+        // final Option[] unavailable = new Option[] { PRINT, CHECK_ASSERTIONS, DEBUG, OUTPUT, EXTRACT_HTML,
+        // REPORT_POSTFIX, REPORT_PREFIX };
+        // warnUnusedOptions(cmd, unavailable, true);
+        final List<Configuration> configuration = getConfiguration(cmd).stream().map(config -> {
 
-    private static void startDaemonMode(final CommandLine cmd) {
-        final Option[] unavailable = new Option[] { PRINT, CHECK_ASSERTIONS, DEBUG, OUTPUT, EXTRACT_HTML, REPORT_POSTFIX, REPORT_PREFIX };
-        warnUnusedOptions(cmd, unavailable, true);
-        final ConfigurationLoader config = getConfiguration(cmd);
-        final Daemon validDaemon = new Daemon(determineHost(cmd), determinePort(cmd), determineThreads(cmd));
-        if (cmd.hasOption(DISABLE_GUI.getOpt())) {
-            validDaemon.setGuiEnabled(false);
-        }
-        final Configuration configuration = config.build(ProcessorProvider.getProcessor());
+            final Configuration c = config.build(ProcessorProvider.getProcessor());
+            return c;
+        }).collect(Collectors.toList());
         printScenarios(configuration);
+        final CommandLineOptions.DaemonOptions daemonOptions = cmd.getDaemonOptions();
+        final Daemon validDaemon = new Daemon(daemonOptions.getHost(), daemonOptions.getPort(), determineThreads(daemonOptions));
+        validDaemon.setGuiEnabled(!daemonOptions.isDisableGUI());
         Printer.writeOut("\nStarting daemon mode ...");
-        validDaemon.startServer(configuration);
+        validDaemon.startServer(ProcessorProvider.getProcessor(), configuration.toArray(new Configuration[configuration.size()]));
     }
 
-    private static void warnUnusedOptions(final CommandLine cmd, final Option[] unavailable, final boolean daemon) {
-        Arrays.stream(cmd.getOptions()).filter(o -> ArrayUtils.contains(unavailable, o))
-                .map(o -> "The option " + o.getLongOpt() + " is not available in daemon mode").forEach(log::error);
-        if (daemon && !cmd.getArgList().isEmpty()) {
-            log.info("Ignoring test targets in daemon mode");
-        }
+    private static void warnUnusedOptions(final CommandLineOptions cmd, final String[] unavailable, final boolean daemon) {
+        // Arrays.stream(cmd.getOptions()).filter(o -> ArrayUtils.contains(unavailable, o))
+        // .map(o -> "The option " + o.getLongOpt() + " is not available in daemon mode").forEach(log::error);
+        // if (daemon && !cmd.getArgList().isEmpty()) {
+        // log.info("Ignoring test targets in daemon mode");
+        // }
     }
 
-    private static ReturnValue processActions(final CommandLine cmd) throws IOException {
+    private static ReturnValue processActions(final CommandLineOptions cmd) throws IOException {
         long start = System.currentTimeMillis();
-        final Option[] unavailable = new Option[] { HOST, PORT, WORKER_COUNT, DISABLE_GUI };
-        warnUnusedOptions(cmd, unavailable, false);
-        final Configuration config = getConfiguration(cmd).build(ProcessorProvider.getProcessor());
+        // final Option[] unavailable = new Option[] { HOST, PORT, WORKER_COUNT, DISABLE_GUI };
+        // warnUnusedOptions(cmd, unavailable, false);
+        final Processor processor = ProcessorProvider.getProcessor();
+        final List<Configuration> config = getConfiguration(cmd).stream().map(b -> {
+            return b.build(processor);
+        }).collect(Collectors.toList());
         printScenarios(config);
-        final InternalCheck check = new InternalCheck(config);
-        final Path outputDirectory = determineOutputDirectory(cmd);
-
-        final Processor processor = config.getContentRepository().getProcessor();
-        if (cmd.hasOption(EXTRACT_HTML.getOpt())) {
+        final InternalCheck check = new InternalCheck(processor, config.toArray(new Configuration[config.size()]));
+        final Path outputDirectory = determineOutputDirectory(cmd.getCliOptions());
+        final CommandLineOptions.CliOptions cliOptions = cmd.getCliOptions();
+        if (cliOptions.isExtractHtml()) {
             check.getCheckSteps().add(new ExtractHtmlContentAction(processor, outputDirectory));
         }
-        check.getCheckSteps().add(new SerializeReportAction(outputDirectory, processor, determineNamingStrategy(cmd)));
-        if (cmd.hasOption(SERIALIZE_REPORT_INPUT.getOpt())) {
+        check.getCheckSteps().add(new SerializeReportAction(outputDirectory, processor, determineNamingStrategy(cmd.getCliOptions())));
+        if (cliOptions.isSerializeInput()) {
             check.getCheckSteps().add(new SerializeReportInputAction(outputDirectory, check.getConversionService()));
         }
-        if (cmd.hasOption(PRINT.getOpt())) {
+        if (cliOptions.isPrintReport()) {
             check.getCheckSteps().add(new PrintReportAction(processor));
         }
 
-        if (cmd.hasOption(CHECK_ASSERTIONS.getOpt())) {
-            final Assertions assertions = loadAssertions(cmd.getOptionValue(CHECK_ASSERTIONS.getOpt()));
+        if (cliOptions.getAssertions() != null) {
+            final Assertions assertions = loadAssertions(cliOptions.getAssertions());
             check.getCheckSteps().add(new CheckAssertionAction(assertions, processor));
         }
-        if (cmd.hasOption(PRINT_MEM_STATS.getOpt())) {
+        if (cliOptions.isPrintMemoryStats()) {
             check.getCheckSteps().add(new PrintMemoryStats());
         }
         log.info("Setup completed in {}ms\n", System.currentTimeMillis() - start);
 
-        final Collection<Input> targets = determineTestTargets(cmd);
+        final Collection<Input> targets = determineTestTargets(cmd.getCliOptions());
         start = System.currentTimeMillis();
         final Map<String, Result> results = new HashMap<>();
         Printer.writeOut("\nProcessing of {0} objects started", targets.size());
@@ -217,11 +180,14 @@ public class Validator {
         return check.isSuccessful(results) ? ReturnValue.SUCCESS : ReturnValue.createFailed(check.getNotAcceptableCount(results));
     }
 
-    private static ConfigurationLoader getConfiguration(final CommandLine cmd) {
-        final URI scenarioLocation = determineDefinition(cmd);
-        final URI repositoryLocation = determineRepository(cmd);
-        reportConfiguration(scenarioLocation, repositoryLocation);
-        return Configuration.load(scenarioLocation, repositoryLocation);
+    private static List<ConfigurationLoader> getConfiguration(final CommandLineOptions cmd) {
+        return cmd.getScenarios().stream().map(s -> {
+            final URI scenarioLocation = determineDefinition(s);
+            final URI repositoryLocation = determineRepository(cmd);
+            reportConfiguration(scenarioLocation, repositoryLocation);
+            return Configuration.load(scenarioLocation, repositoryLocation);
+        }).collect(Collectors.toList());
+
     }
 
     private static void reportConfiguration(final URI scenarioLocation, final URI repositoryLocation) {
@@ -229,30 +195,31 @@ public class Validator {
         Printer.writeOut("Using repository  {0}", repositoryLocation);
     }
 
-    private static void printScenarios(final Configuration configuration) {
-        Printer.writeOut("Loaded \"{0}\" by {1} from {2} ", configuration.getName(), configuration.getAuthor(), configuration.getDate());
-        Printer.writeOut("\nThe following scenarios are available:");
-        configuration.getScenarios().forEach(e -> {
-            final Line line = new Line(Code.GREEN);
-            line.add("  * " + e.getName());
-            Printer.writeOut(line.render(false, false));
+    private static void printScenarios(final List<Configuration> configurations) {
+        configurations.forEach(configuration -> {
+            Printer.writeOut("Loaded \"{0}\" by {1} from {2} ", configuration.getName(), configuration.getAuthor(),
+                    configuration.getDate());
+            Printer.writeOut("\nThe following scenarios are available:");
+            configuration.getScenarios().forEach(e -> {
+                final Line line = new Line(Code.GREEN);
+                line.add("  * " + e.getName());
+                Printer.writeOut(line.render(false, false));
+            });
         });
     }
 
-    private static NamingStrategy determineNamingStrategy(final CommandLine cmd) {
+    private static NamingStrategy determineNamingStrategy(final CommandLineOptions.CliOptions cmd) {
         final DefaultNamingStrategy namingStrategy = new DefaultNamingStrategy();
-        if (cmd.hasOption(REPORT_PREFIX.getLongOpt())) {
-            namingStrategy.setPrefix(cmd.getOptionValue(REPORT_PREFIX.getLongOpt()));
+        if (isNotEmpty(cmd.getReportPrefix())) {
+            namingStrategy.setPrefix(cmd.getReportPrefix());
         }
-        if (cmd.hasOption(REPORT_POSTFIX.getLongOpt())) {
-            namingStrategy.setPostfix(cmd.getOptionValue(REPORT_POSTFIX.getLongOpt()));
+        if (isNotEmpty(cmd.getReportPostfix())) {
+            namingStrategy.setPostfix(cmd.getReportPostfix());
         }
-
         return namingStrategy;
     }
 
-    private static Assertions loadAssertions(final String optionValue) {
-        final Path p = Paths.get(optionValue);
+    private static Assertions loadAssertions(final Path p) {
         Assertions a = null;
         if (Files.exists(p)) {
             final ConversionService c = new ConversionService();
@@ -262,24 +229,23 @@ public class Validator {
         return a;
     }
 
-    private static Path determineOutputDirectory(final CommandLine cmd) {
-        final String value = cmd.getOptionValue(OUTPUT.getOpt());
-        final Path fir;
-        if (StringUtils.isNotBlank(value)) {
-            fir = Paths.get(value);
-            if ((!Files.exists(fir) && !fir.toFile().mkdirs()) || !Files.isDirectory(fir)) {
-                throw new IllegalStateException(String.format("Invalid target directory %s specified", value));
+    private static Path determineOutputDirectory(final CommandLineOptions.CliOptions cmd) {
+        final Path dir;
+        if (cmd.getOutputPath() != null) {
+            dir = cmd.getOutputPath();
+            if ((!Files.exists(dir) && !dir.toFile().mkdirs()) || !Files.isDirectory(dir)) {
+                throw new IllegalStateException(String.format("Invalid target directory %s specified", dir.toString()));
             }
         } else {
-            fir = Paths.get(""/* cwd */);
+            dir = Paths.get(""/* cwd */);
         }
-        return fir;
+        return dir;
     }
 
-    private static Collection<Input> determineTestTargets(final CommandLine cmd) throws IOException {
+    private static Collection<Input> determineTestTargets(final CommandLineOptions.CliOptions cmd) throws IOException {
         final Collection<Input> targets = new ArrayList<>();
-        if (!cmd.getArgList().isEmpty()) {
-            cmd.getArgList().forEach(e -> targets.addAll(determineTestTarget(e)));
+        if (cmd.getFiles() != null && !cmd.getFiles().isEmpty()) {
+            cmd.getFiles().forEach(e -> targets.addAll(determineTestTarget(e)));
         }
         if (isPiped()) {
             targets.add(readFromPipe());
@@ -298,14 +264,13 @@ public class Validator {
         return InputFactory.read(System.in, "stdin");
     }
 
-    private static Collection<Input> determineTestTarget(final String s) {
-        final Path d = Paths.get(s);
+    private static Collection<Input> determineTestTarget(final Path d) {
         if (Files.isDirectory(d)) {
             return listDirectoryTargets(d);
         } else if (Files.exists(d)) {
             return Collections.singleton(InputFactory.read(d));
         }
-        log.warn("The specified test target {} does not exist. Will be ignored", s);
+        log.warn("The specified test target {} does not exist. Will be ignored", d);
         return Collections.emptyList();
 
     }
@@ -320,9 +285,9 @@ public class Validator {
 
     }
 
-    private static URI determineRepository(final CommandLine cmd) {
-        if (checkOptionWithValue(REPOSITORY, cmd)) {
-            final Path d = Paths.get(cmd.getOptionValue(REPOSITORY.getOpt()));
+    private static URI determineRepository(final CommandLineOptions cmd) {
+        if (cmd.getRepositories() != null) {
+            final Path d = cmd.getRepositories();
             if (Files.isDirectory(d)) {
                 return d.toUri();
             } else {
@@ -333,31 +298,13 @@ public class Validator {
         return null;
     }
 
-    private static URI determineDefinition(final CommandLine cmd) {
-        checkOptionWithValue(SCENARIOS, cmd);
-        final Path f = Paths.get(cmd.getOptionValue(SCENARIOS.getOpt()));
+    private static URI determineDefinition(final Path f) {
         if (Files.isRegularFile(f)) {
             return f.toAbsolutePath().toUri();
         } else {
             throw new IllegalArgumentException(
                     String.format("Not a valid path for scenario definition specified: '%s'", f.toAbsolutePath()));
         }
-    }
-
-    private static boolean checkOptionWithValue(final Option option, final CommandLine cmd) {
-        final String opt = option.getOpt();
-        if (cmd.hasOption(opt)) {
-            final String value = cmd.getOptionValue(opt);
-            if (StringUtils.isNoneBlank(value)) {
-                return true;
-            } else {
-                throw new IllegalArgumentException(String.format("Option value required for Option '%s'", option.getLongOpt()));
-            }
-        } else if (option.isRequired()) {
-
-            throw new IllegalArgumentException(String.format("Option '%s' required ", option.getLongOpt()));
-        }
-        return false;
     }
 
 }
