@@ -19,7 +19,9 @@ package de.kosit.validationtool.cmd;
 import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -49,6 +51,7 @@ import de.kosit.validationtool.daemon.Daemon;
 import de.kosit.validationtool.impl.ConversionService;
 import de.kosit.validationtool.impl.EngineInformation;
 import de.kosit.validationtool.impl.Printer;
+import de.kosit.validationtool.impl.input.StreamHelper;
 import de.kosit.validationtool.impl.xml.ProcessorProvider;
 
 import net.sf.saxon.s9api.Processor;
@@ -242,8 +245,10 @@ public class Validator {
         if (cmd.getFiles() != null && !cmd.getFiles().isEmpty()) {
             cmd.getFiles().forEach(e -> targets.addAll(determineTestTarget(e)));
         }
-        if (isPiped()) {
-            targets.add(readFromPipe());
+        @SuppressWarnings("java:S4829") // sanitation is delegated to xml stack
+        final BufferedInputStream input = StreamHelper.wrapPeekable(System.in);
+        if (isPiped(input)) {
+            targets.add(readFromPipe(input));
         }
         if (targets.isEmpty()) {
             throw new IllegalStateException("No test targets found. Nothing to check. Will quit now!");
@@ -251,12 +256,12 @@ public class Validator {
         return targets;
     }
 
-    private static boolean isPiped() throws IOException {
-        return System.in.available() > 0;
+    private static boolean isPiped(final InputStream inputStream) throws IOException {
+        return inputStream.available() > 0;
     }
 
-    private static Input readFromPipe() {
-        return InputFactory.read(System.in, "stdin");
+    private static Input readFromPipe(final InputStream stream) {
+        return InputFactory.read(stream, "stdin");
     }
 
     private static Collection<Input> determineTestTarget(final Path d) {

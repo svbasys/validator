@@ -64,9 +64,11 @@ public class SchemaProvider {
         return createSchema(sf, schemaSources, null);
     }
 
+    @SuppressWarnings("java:S2095") // xml stack requires not closing the resource here
     private static Source resolve(final URL resource) {
         try {
-            return new StreamSource(resource.openStream(), resource.toURI().getRawPath());
+            final String rawPath = resource.toURI().getRawPath();
+            return new StreamSource(resource.openStream(), rawPath);
         } catch (final IOException | URISyntaxException e) {
             throw new IllegalStateException("Can not load schema for resource " + resource.getPath(), e);
         }

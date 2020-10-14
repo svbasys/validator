@@ -72,7 +72,7 @@ public class Helper {
 
         public static final URI NOT_WELLFORMED = ROOT.resolve("input/simple-not-wellformed.xml");
 
-        public static final URI UNKNOWN = ROOT.resolve("input/unknown.xml");
+        public static final URI UNKNOWN = ROOT.resolve("input/large.xml");
 
         public static final URI GARBAGE = ROOT.resolve("input/no-xml.file");
 
@@ -122,6 +122,8 @@ public class Helper {
     public static final URI ASSERTIONS = EXAMPLES_DIR.resolve("assertions/tests-xrechnung.xml");
 
     public static final URL JAR_REPOSITORY = Helper.class.getClassLoader().getResource("simple/packaged/repository/");
+
+    public static final URI LARGE_XML = Paths.get("pom.xml").toUri();
 
     /**
      * Lädt ein XML-Dokument von der gegebenen URL

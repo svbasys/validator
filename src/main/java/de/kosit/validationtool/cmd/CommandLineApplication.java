@@ -91,35 +91,14 @@ public class CommandLineApplication {
     }
 
     private static int logExecutionException(final Exception ex, final CommandLine cli, final ParseResult parseResult) {
-        ex.printStackTrace();
-        // log.error(ex.getMessage(), ex);
-
+        Printer.writeErr(ex, ex.getMessage());
         return 1;
     }
-
-    // private static boolean isHelpRequested(final String[] args) {
-    // final Options helpOptions = createHelpOptions();
-    // try {
-    // final CommandLineParser parser = new DefaultParser();
-    // final CommandLine cmd = parser.parse(helpOptions, args, true);
-    // if (cmd.hasOption(HELP.getOpt()) || args.length == 0) {
-    // return true;
-    // }
-    // } catch (final ParseException e) {
-    // // we can ignore that, we just look for the help parameters
-    // }
-    // return false;
-    // }
 
     enum Level {
 
         INFO, WARN, DEBUG, TRACE, ERROR, OFF;
 
-        // static String resolve(final String optionValue) throws ParseException {
-        // return Arrays.stream(values()).filter(e ->
-        // e.name().equalsIgnoreCase(optionValue)).map(Enum::name).findFirst()
-        // .orElseThrow(() -> new ParseException("Either specify trace,debug,info,warn,error as log level"));
-        // }
     }
 
 }

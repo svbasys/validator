@@ -49,4 +49,12 @@ public class Printer {
     public static void writeErr(final String message, final Object... params) {
         System.err.println(MessageFormat.format(message, params));
     }
+
+    public static void writeErr(final Exception ex, final String message, final Object... params) {
+        writeErr(message, params);
+        if (ex != null) {
+            ex.printStackTrace();
+        }
+    }
+
 }
