@@ -44,7 +44,4 @@ public class ReturnValue {
         return new ReturnValue(count);
     }
 
-    public static ReturnValue resolveByCode(final int execute) {
-        return SUCCESS;
-    }
 }
