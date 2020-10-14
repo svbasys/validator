@@ -109,8 +109,6 @@ public class CommandLineOptions implements Callable<ReturnValue> {
 
     }
 
-
-
     @ArgGroup(exclusive = false, heading = "Daemon options\n")
     private final DaemonOptions daemonOptions = new DaemonOptions();
 
