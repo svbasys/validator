@@ -23,7 +23,7 @@ import java.text.MessageFormat;
  * 
  * @author Andreas Penski
  */
-@SuppressWarnings("squid:S106")
+@SuppressWarnings("squid:S106,java:S1148")
 public class Printer {
 
     private Printer() {
@@ -49,6 +49,7 @@ public class Printer {
     public static void writeErr(final String message, final Object... params) {
         System.err.println(MessageFormat.format(message, params));
     }
+
 
     public static void writeErr(final Exception ex, final String message, final Object... params) {
         writeErr(message, params);
