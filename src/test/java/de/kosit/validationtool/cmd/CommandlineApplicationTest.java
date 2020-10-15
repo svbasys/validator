@@ -237,4 +237,12 @@ public class CommandlineApplicationTest {
         assertThat(CommandLine.getErrorOutput()).contains("Will ignore cli mode options");
     }
 
+    @Test
+    public void testParsingError() {
+        final String[] args = new String[] { "-s", "-r", Paths.get(Simple.REPOSITORY_URI).toString(),
+                Paths.get(Simple.SIMPLE_VALID).toString() };
+        CommandLineApplication.mainProgram(args);
+        assertThat(CommandLine.getErrorOutput()).contains("Expected parameter for option");
+    }
+
 }

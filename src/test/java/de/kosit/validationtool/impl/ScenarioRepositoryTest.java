@@ -107,6 +107,25 @@ public class ScenarioRepositoryTest {
         assertThat(scenario.getObject().getName()).isEqualTo("fallback");
     }
 
+    @Test
+    public void testNoConfiguration() {
+        this.expectedException.expect(IllegalArgumentException.class);
+        this.repository = new ScenarioRepository();
+    }
+
+    @Test
+    public void testFallbackOnMultipleConfigurations() {
+        final TestConfiguration first = this.configInstance;
+        first.setFallbackScenario(createFallback());
+        setup();// create new one;
+        final TestConfiguration second = this.configInstance;
+        second.setFallbackScenario(createFallback());
+        this.repository = new ScenarioRepository(first, second);
+        final Scenario fallback = this.repository.getFallbackScenario();
+        assertThat(fallback).isSameAs(first.getFallbackScenario());
+        assertThat(fallback).isNotSameAs(second.getFallbackScenario());
+    }
+
     private XdmNode load(final URI uri) throws IOException {
         return Helper.parseDocument(this.configInstance.getContentRepository().getProcessor(), read(uri.toURL())).getObject();
     }
