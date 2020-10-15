@@ -23,7 +23,7 @@ import java.text.MessageFormat;
  * 
  * @author Andreas Penski
  */
-@SuppressWarnings("squid:S106,java:S1148")
+@SuppressWarnings("squid:S106")
 public class Printer {
 
     private Printer() {
@@ -50,6 +50,14 @@ public class Printer {
         System.err.println(MessageFormat.format(message, params));
     }
 
+    /**
+     * Writes to standard error channel and prints a stacktrace.
+     * 
+     * @param ex the exception
+     * @param message the message with placeholders
+     * @param params the params
+     */
+    @SuppressWarnings("squid:S1148")
     public static void writeErr(final Exception ex, final String message, final Object... params) {
         writeErr(message, params);
         if (ex != null) {
